@@ -21,9 +21,8 @@ docraptor https://docraptor.com/examples/invoice.html  # URLs are detected by pr
 
 The full DocRaptor API is available, see:
 
-```bash
-docraptor --help
-Usage: ./bin/docraptor [options] <url/file>
+```
+Usage: docraptor [options] <url/file>
 
 Server options:
     -k, --key KEY                    The API Key to use when calling the service. Defaults to YOUR_API_KEY_HERE or ENV[DOCRAPTOR_API_KEY].
@@ -43,6 +42,7 @@ Document options:
 Prince options:
         --prince-baseurl URL         Set base url when rendering. Defaults to nothing for file rendering or render url.
         --prince-css-dpi DPI         Set a base CSS DPI. Defaults value used by Prince is 96.
+
 ...
 ```
 
