@@ -1,0 +1,327 @@
+#!/usr/bin/env ruby
+require "bundler"
+Bundler.require
+require "optparse"
+
+TYPES = %w(pdf xls xlsx)
+PRINT_STATUS_EVERY = 30
+
+def log(message)
+  STDERR.puts(message)
+end
+
+options = {
+  # Server Options
+  key:    ENV["DOCRAPTOR_API_KEY"] || "YOUR_API_KEY_HERE",
+  server: "https://docraptor.com",
+
+  # Document Options
+  javascript: false,
+  test:       false,
+  type:       "pdf",
+  strict:     "none",
+  async:      false,
+
+  # Script Options
+  open:  true,
+}
+
+opt_parser = OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options] <url/file>"
+
+
+  opts.separator ""
+  opts.separator "Server options:"
+
+  opts.on("-kKEY", "--key KEY", "The API Key to use when calling the service. Defaults to YOUR_API_KEY_HERE or ENV[DOCRAPTOR_API_KEY].") do |key|
+    options[:key] = key
+  end
+
+  opts.on("-sSERVER", "--server SERVER",
+          "Make API requests against SERVER, scheme not required. Defaults to #{options[:server]}") do |server|
+    if !server.include?("://")
+      scheme = server =~ /\Alocalhost/ ? "http" : "https"
+      server = "#{scheme}://#{server}"
+    end
+    options[:server] = server
+  end
+
+
+  opts.separator ""
+  opts.separator "Document options:"
+
+  opts.on("--async", "Create document asynchronously(10 min limit). Defaults to synchronous(1 min limit).") do |async|
+    options[:async] = async
+  end
+
+  opts.on("-d", "--debug", "Enable debug logging.") do
+    options[:debug] = true
+  end
+
+  opts.on("--no-ignore-resource-errors",
+          "Error when a resource cannot be downloaded.") do |ignore_resource_errors|
+    options[:ignore_resource_errors] = true
+  end
+
+  opts.on("-j", "--javascript", "Enable DocRaptor JavaScript parsing. Defaults to no javascript.") do |javascript|
+    options[:javascript] = javascript
+  end
+
+  opts.on("--name NAME", "Give a name to this document. Defaults to a randomized string. Does not affect output filename.") do |name|
+    options[:name] = name
+  end
+
+  opts.on("--referrer URL", "Set HTTP REFERRER when rendering. Defaults to localhost for file rendering or render url.") do |url|
+    options[:referrer] = url
+  end
+
+  opts.on("--strict STRICTNESS", "Set HTML strictness. Defaults to none.") do |strict|
+    options[:strict] = strict
+  end
+
+  opts.on("--test", "Create this as a test document. Defaults to non-test.") do |test|
+    options[:test] = test
+  end
+
+  opts.on("-t", "--type TYPE", TYPES, "Type of document to make, can be #{TYPES.join(', ')}. Defaults to pdf.") do |type|
+    options[:type] = type
+  end
+
+  opts.separator ""
+  opts.separator "Prince options:"
+
+  opts.on("--prince-baseurl URL", "Set base url when rendering. Defaults to nothing for file rendering or render url.") do |url|
+    options[:prince_baseurl] = url
+  end
+
+  opts.on("--prince-css-dpi DPI", "Set a base CSS DPI. Defaults value used by Prince is 96.") do |dpi|
+    options[:prince_css_dpi] = dpi
+  end
+
+  opts.on("--prince-disallow-annotate", "Disallow annotating the final PDF.") do |disallow|
+    options[:prince_disallow_annotate] = disallow
+  end
+
+  opts.on("--prince-disallow-copy", "Disallow copying the final PDF.") do |disallow|
+    options[:prince_disallow_copy] = disallow
+  end
+
+  opts.on("--prince-disallow-modify", "Disallow modifying the final PDF.") do |disallow|
+    options[:prince_disallow_modify] = disallow
+  end
+
+  opts.on("--prince-disallow-print", "Disallow printing the final PDF.") do |disallow|
+    options[:prince_disallow_print] = disallow
+  end
+
+  opts.on("--prince-encrypt", "Encrypt the output PDF.") do |encrypt|
+    options[:prince_encrypt] = encrypt
+  end
+
+  opts.on("--prince-key-bits BITS", "Set the encryption key size, must be used with --prince-encrypt.") do |key_bits|
+    options[:prince_key_bits] = key_bits
+  end
+
+  opts.on("--prince-input INPUT", "Set the input type for PDF: xml, html, auto.") do |input|
+    options[:prince_input] = input
+  end
+
+  opts.on("--prince-no-compress", "Disable PDF compression.") do |no_compress|
+    options[:prince_no_compress] = no_compress
+  end
+
+  opts.on("--prince-user-password PASS", "Set the user password for decrypting an encrypted PDF.") do |password|
+    options[:prince_user_password] = password
+  end
+
+  opts.on("--prince-owner-password PASS", "Set the owner password for decrypting an encrypted PDF.") do |password|
+    options[:prince_owner_password] = password
+  end
+
+  opts.on("--prince-insecure", "Set the insecure flag") do |insecure|
+    options[:prince_insecure] = insecure
+  end
+
+  opts.on("--prince-http-timeout SECS", "Set the timeout for HTTP connections made by prince") do |timeout_seconds|
+    options[:prince_http_timeout] = timeout_seconds
+  end
+
+  opts.on("--prince-http-user USER", "Set the user for setting basic auth credentials. Defaults to nothing for file rendering or render url.") do |user|
+    options[:prince_http_user] = user
+  end
+
+  opts.on("--prince-http-password PASS", "Set the password for setting basic auth credentials. Defaults to nothing for file rendering or render url.") do |password|
+    options[:prince_http_password] = password
+  end
+
+  opts.on("--prince-http-proxy PROXY", "Set the proxy server.") do |proxy|
+    options[:prince_http_proxy] = proxy
+  end
+
+  opts.on("--prince-javascript", "Enable PrinceXML JavaScript parsing. Defaults to false.") do |prince_javascript|
+    options[:prince_javascript] = prince_javascript
+  end
+
+  opts.on("--prince-media MEDIA", "Create this with a specific CSS media selector. Defaults to print.") do |prince_media|
+    options[:prince_media] = prince_media.to_s
+  end
+
+  opts.on("--prince-profile PROFILE", "Set the PDF Profile. PDF/A-1b PDF/X-3:2003 PDF/X-4") do |prince_profile|
+    options[:prince_profile] = prince_profile.to_s
+  end
+
+  opts.on("--prince-debug", "Enable PrinceXML debug logging.") do |prince_debug|
+    options[:prince_debug] = prince_debug
+  end
+
+  opts.on("--prince-version VERSION", "Create this with a specific PrinceXML version. Defaults to user setting.") do |prince_version|
+    options[:prince_version] = prince_version.to_s
+  end
+
+  opts.on("--prince-no-embed-fonts", "Disable font embelistiteming in PDF output.") do |no_embed_fonts|
+    options[:no_embed_fonts] = no_embed_fonts
+  end
+
+  opts.on("--prince-no-subset-fonts", "Disable font subsetting in PDF output.") do |no_subset_fonts|
+    options[:no_subset_fonts] = no_subset_fonts
+  end
+
+  opts.separator ""
+  opts.separator "Script options:"
+
+  opts.on("-o", "--[no-]open", "Automatically open output files. Defaults to true.") do |open|
+    options[:open] = open
+  end
+
+  opts.separator ""
+  opts.separator "Common options:"
+
+  opts.on("-c", "--common", "Set common development options: open, test, javascript enabled") do
+    options[:open] = true
+    options[:test] = true
+    options[:javascript] = true
+  end
+
+  opts.on_tail("-h", "--help", "Show this message") do
+    log opts
+    exit
+  end
+end
+
+opt_parser.parse!(ARGV)
+
+file_or_url = ARGV.shift
+
+if !file_or_url
+  log opt_parser
+  abort
+end
+
+DocRaptor.configure do |dr|
+  dr.username = options[:key]
+  server = URI.parse(options[:server])
+  dr.host = "#{server.host}:#{server.port}"
+  dr.scheme = server.scheme
+  dr.debugging = options[:debug]
+end
+
+$docraptor = DocRaptor::DocApi.new
+
+all_doc_attributes = {
+  strict:                 options[:strict],
+  test:                   options[:test],
+  javascript:             options[:javascript],
+  document_type:          options[:type],
+  prince_options:         {},
+  async:                  options[:async],
+  ignore_resource_errors: options[:ignore_resource_errors],
+}
+
+all_doc_attributes[:prince_options][:version]       = options[:prince_version] if options[:prince_version]
+all_doc_attributes[:prince_options][:javascript]    = options[:prince_javascript] if options[:prince_javascript]
+all_doc_attributes[:prince_options][:media]         = options[:prince_media] if options[:prince_media]
+all_doc_attributes[:prince_options][:baseurl]       = options[:prince_baseurl] if options[:prince_baseurl]
+all_doc_attributes[:prince_options][:css_dpi]       = options[:prince_css_dpi] if options[:prince_css_dpi]
+all_doc_attributes[:prince_options][:disallow_annotate] = options[:prince_disallow_annotate] if options[:prince_disallow_annotate]
+all_doc_attributes[:prince_options][:disallow_copy] = options[:prince_disallow_copy] if options[:prince_disallow_copy]
+all_doc_attributes[:prince_options][:disallow_modify] = options[:prince_disallow_modify] if options[:prince_disallow_modify]
+all_doc_attributes[:prince_options][:disallow_print]= options[:prince_disallow_print] if options[:prince_disallow_print]
+all_doc_attributes[:prince_options][:encrypt]       = options[:prince_encrypt] if options[:prince_encrypt]
+all_doc_attributes[:prince_options][:key_bits]       = options[:prince_key_bits] if options[:prince_key_bits]
+all_doc_attributes[:prince_options][:input]       = options[:prince_input] if options[:prince_input]
+all_doc_attributes[:prince_options][:no_compress]   = options[:prince_no_compress] if options[:prince_no_compress]
+all_doc_attributes[:prince_options][:user_password] = options[:prince_user_password] if options[:prince_user_password]
+all_doc_attributes[:prince_options][:owner_password]= options[:prince_owner_password] if options[:prince_owner_password]
+all_doc_attributes[:prince_options][:http_user]     = options[:prince_http_user] if options[:prince_http_user]
+all_doc_attributes[:prince_options][:http_password] = options[:prince_http_password] if options[:prince_http_password]
+all_doc_attributes[:prince_options][:http_proxy]    = options[:prince_http_proxy] if options[:prince_http_proxy]
+all_doc_attributes[:prince_options][:http_timeout]  = options[:prince_http_timeout] if options[:prince_http_timeout]
+all_doc_attributes[:prince_options][:insecure]      = options[:prince_insecure] if options[:prince_insecure]
+all_doc_attributes[:prince_options][:debug]         = options[:prince_debug] if options[:prince_debug]
+all_doc_attributes[:prince_options][:profile]       = options[:prince_profile] if options[:prince_profile]
+all_doc_attributes[:prince_options][:no_embed_fonts] = options[:no_embed_fonts] if options[:no_embed_fonts]
+all_doc_attributes[:prince_options][:no_subset_fonts] = options[:no_subset_fonts] if options[:no_subset_fonts]
+
+if file_or_url.include?("://")
+  url = file_or_url
+  all_doc_attributes[:document_url] = url
+  all_doc_attributes[:referrer]     = options[:referrer] || url
+  all_doc_attributes[:prince_options][:baseurl] ||= url
+else
+  input_filename = file_or_url
+  all_doc_attributes[:referrer]         = options[:referrer] || "http://localhost/"
+  all_doc_attributes[:document_content] = File.read(input_filename)
+end
+
+all_doc_attributes.delete(:prince_options) if all_doc_attributes[:prince_options].empty?
+
+base_filename = rand(10**12).to_s(36) # random to make Preview refresh every time with ease
+
+def run_doc(options, all_doc_attributes, base_filename)
+  output_filename = "/tmp/#{base_filename}.#{options[:type]}"
+
+  doc_attributes = all_doc_attributes.merge(name: options[:name] || File.basename(output_filename))
+
+  log "Creating document #{doc_attributes[:name]} using #{options[:server]}"
+  pretty_doc_attributes = doc_attributes.dup
+  pretty_doc_attributes[:document_content] = pretty_doc_attributes[:document_content][0..30] + "..." if pretty_doc_attributes.include?(:document_content)
+  start = Time.now
+
+  if options[:async]
+    response = $docraptor.create_async_doc(doc_attributes)
+    status_id = response.status_id
+    t = Time.now.to_f
+    time_of_last_status_message = Time.now - PRINT_STATUS_EVERY
+    while !%w{completed failed}.include?((status_response = $docraptor.get_async_doc_status(status_id)).status)
+      if Time.now - time_of_last_status_message > PRINT_STATUS_EVERY
+        log "STATUS (#{status_id}, elapsed time: #{(Time.now.to_f - t).round(3)} sec): #{status_response.status.inspect}"
+        time_of_last_status_message = Time.now
+      end
+      sleep 1
+    end
+    log "Elapsed time: #{(Time.now.to_f - t).round(3)} secs"
+    if status_response.status == 'completed'
+      download_response = $docraptor.get_async_doc(status_response.download_id)
+      File.open(output_filename, "wb") do |file|
+        file.write(download_response)
+      end
+      system("open", output_filename) if options[:open]
+    else
+      log "Document failed: #{status_response.inspect}"
+      failures << [status_response, {status_id: status_id, name: doc_attributes[:name]}]
+    end
+  else
+    response = $docraptor.create_doc(doc_attributes)
+    log "  Success (%.3f seconds)" % (Time.now - start)
+    File.open(output_filename, "wb") do |file|
+      file.write(response)
+    end
+    system("open", output_filename) if options[:open]
+  end
+rescue DocRaptor::ApiError => e
+  log "ERROR: #{e.class}"
+  log e.response_body
+  exit 1
+end
+
+run_doc(options, all_doc_attributes, base_filename)

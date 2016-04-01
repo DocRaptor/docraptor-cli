@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+cd "$(dirname "$0")/.."
+
+# check dependencies
+ruby -v > /dev/null    || (echo "ruby must be installed"; exit 1)
+bundler -v > /dev/null || (echo "bundler must be installed"; exit 1)
+
+bundle install
+
+echo "Testing not yet written for this repository."
+exit 1
