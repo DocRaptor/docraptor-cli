@@ -73,9 +73,9 @@ This code is a thin wrapper around the [docraptor gem](https://github.com/docrap
 2. Merge feature branch(es) into master
 3. `script/test`
 4. Increment version in code:
-  - ...
+  - lib/docraptor-cli/version.rb
 5. Update [CHANGELOG.md](CHANGELOG.md)
-6. Commit "Release version vX.Y.Z"
+6. Commit "Release vX.Y.Z"
 7. `rake release`
 
 
