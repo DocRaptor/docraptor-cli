@@ -19,6 +19,6 @@ Gem::Specification.new do |s|
 
   s.files         = `git ls-files`.split("\n").uniq.sort.select{|f| !f.empty? }
   # s.test_files    = `git ls-files spec`.split("\n")
-  s.executables   = []
+  s.executables   = ["docraptor"]
   s.require_paths = ["lib"]
 end
