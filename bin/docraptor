@@ -3,6 +3,7 @@ ENV['BUNDLE_GEMFILE'] ||= File.expand_path("../../Gemfile", __FILE__)
 require "bundler"
 Bundler.require
 require "optparse"
+require "docraptor"
 
 TYPES = %w(pdf xls xlsx)
 PRINT_STATUS_EVERY = 30
