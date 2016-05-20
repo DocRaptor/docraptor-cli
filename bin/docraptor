@@ -29,7 +29,7 @@ options = {
 }
 
 opt_parser = OptionParser.new do |opts|
-  opts.banner = "Usage: #{$0} [options] <url/file>"
+  opts.banner = "Usage: #{File.basename($0)} [options] <url/file>"
 
 
   opts.separator ""
