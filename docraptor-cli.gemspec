@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency 'docraptor', '~> 0.3.0'
 
+  s.add_development_dependency 'bundler', '~> 1.11', '>= 1.11.2'
   s.add_development_dependency 'pry', '~> 0.10', '>= 0.10.3'
   s.add_development_dependency 'rake', '~> 11.1', '>= 11.1.2'
 
