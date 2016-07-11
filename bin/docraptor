@@ -53,6 +53,14 @@ opt_parser = OptionParser.new do |opts|
     options[:async] = async
   end
 
+  opts.on("--callback_url url", "Set a callback URL to be notified upon success. Defaults to naught") do |callback_url|
+    # callback_url can be used for local testing. You need three consoles:
+    #   nc -lk 9001                                                       # listen on port 9001 for any data
+    #   ngrok http 9001                                                   # setup external URL; port from nc session
+    #   bin/docraptor content --callback_url "http://1111111111.ngrok.io" # copied url from the ngrok session
+    options[:callback_url] = callback_url
+  end
+
   opts.on("-d", "--debug", "Enable debug logging.") do
     options[:debug] = true
   end
@@ -235,6 +243,8 @@ all_doc_attributes = {
   async:                  options[:async],
   ignore_resource_errors: options[:ignore_resource_errors],
 }
+
+all_doc_attributes[:callback_url] = options[:callback_url] if options[:callback_url]
 
 all_doc_attributes[:prince_options][:version]       = options[:prince_version] if options[:prince_version]
 all_doc_attributes[:prince_options][:javascript]    = options[:prince_javascript] if options[:prince_javascript]
