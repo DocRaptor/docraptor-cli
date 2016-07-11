@@ -53,7 +53,7 @@ opt_parser = OptionParser.new do |opts|
     options[:async] = async
   end
 
-  opts.on("--callback_url url", "Set a callback URL to be notified upon success. Defaults to naught") do |callback_url|
+  opts.on("--callback_url url", "Set a callback URL to be notified upon success.") do |callback_url|
     # callback_url can be used for local testing. You need three consoles:
     #   nc -lk 9001                                                       # listen on port 9001 for any data
     #   ngrok http 9001                                                   # setup external URL; port from nc session
