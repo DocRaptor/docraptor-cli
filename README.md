@@ -54,6 +54,38 @@ We have guides for doing some of the common things:
 * [CSS Media Selector](https://docraptor.com/documentation/api#api_basic_pdf) to make the page look exactly as it does in your browser
 * Protect content with [HTTP authentication](https://docraptor.com/documentation/api#api_http_user) or [proxies](https://docraptor.com/documentation/api#api_http_proxy) so only DocRaptor can access them
 
+## Testing Callbacks
+
+The `--callback-url` option can be used to set a URL that will receive a POST request after your document has successfully been processed. You can simulate this in your *nix development environment using a couple of simple tools: [`nc`](http://linux.die.net/man/1/nc) and [`ngrok`](https://ngrok.com/).
+
+Let's say you had some document content in a file named `test.html`. To test the callback URL, start a new console and type:
+
+```
+nc -lk 9001
+```
+
+This will listen on port `9001` for requests. Now open another console and type in:
+```
+ngrok http 9001
+```
+
+This will setup an external URL that port forwards to port `9001` on your computer (conveniently being listened to by `nc`). Note the ngrok http URL. It should look something like `http://87654321.ngrok.io`. Copy that URL and open a third console where we will generate our document:
+```
+bin/docraptor test.html --async --callback_url "http://87654321.ngrok.io"
+```
+
+After the document has been generated, if we go to our console running `nc`, we should see we got an HTTP POST request that looks something like this:
+
+```
+POST / HTTP/1.1
+Connection: close
+Host: d94c779c.ngrok.io
+Content-Length: 139
+Content-Type: application/x-www-form-urlencoded
+X-Forwarded-For: 54.158.114.123
+
+download_url=https%3A%2F%2Fdocraptor.com%2Fdownload%2Fe4eabaca-f811-49f8-9375-fcb9cdeae5aa&download_id=e4eabaca-f811-49f8-9375-fcb9cdeae5aa
+```
 
 ## More Help
 
