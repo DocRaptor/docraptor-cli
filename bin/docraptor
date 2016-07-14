@@ -53,6 +53,10 @@ opt_parser = OptionParser.new do |opts|
     options[:async] = async
   end
 
+  opts.on("--callback_url url", "Set a callback URL to be notified upon success.") do |callback_url|
+    options[:callback_url] = callback_url
+  end
+
   opts.on("-d", "--debug", "Enable debug logging.") do
     options[:debug] = true
   end
@@ -235,6 +239,8 @@ all_doc_attributes = {
   async:                  options[:async],
   ignore_resource_errors: options[:ignore_resource_errors],
 }
+
+all_doc_attributes[:callback_url] = options[:callback_url] if options[:callback_url]
 
 all_doc_attributes[:prince_options][:version]       = options[:prince_version] if options[:prince_version]
 all_doc_attributes[:prince_options][:javascript]    = options[:prince_javascript] if options[:prince_javascript]

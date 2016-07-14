@@ -1,3 +1,6 @@
+### Unreleased
+* add `callback_url` option ([https://docraptor.com/documentation/api#api_callback_url](https://docraptor.com/documentation/api#api_callback_url))
+
 ### 0.0.4 [May 23, 2016]
 * Don't use bundler to load gems during execution
 * Use short binary name when showing help
