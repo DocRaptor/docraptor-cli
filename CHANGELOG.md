@@ -1,4 +1,4 @@
-### 0.0.5 [July 14, 2016]
+### 0.1.0 [July 14, 2016]
 * add [`callback_url` option](https://docraptor.com/documentation/api#api_callback_url)
 
 ### 0.0.4 [May 23, 2016]
