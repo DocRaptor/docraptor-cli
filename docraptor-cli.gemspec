@@ -5,8 +5,8 @@ Gem::Specification.new do |s|
   s.name        = "docraptor-cli"
   s.version     = DocRaptorCli::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Elijah Miller"]
-  s.email       = ["elijah.miller@gmail.com"]
+  s.authors     = ["Expected Behavior"]
+  s.email       = ["support@docraptor.com"]
   s.homepage    = "https://github.com/docraptor/docraptor-cli"
   s.summary     = %q{Command line interface for the DocRaptor HTML to PDF/XLS service.}
   s.description = %q{A native command line client library for the DocRaptor HTML to PDF/XLS service.}
